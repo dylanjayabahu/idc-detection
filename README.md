@@ -9,9 +9,9 @@ This repository contains the complete codebase for the research paper:
 
 > This research introduces a deep learning pipeline for the detection of **Invasive Ductal Carcinoma (IDC)** in breast histopathology whole-slide images (WSIs), addressing both accuracy and interpretability for clinical decision-making.
 
+![image](https://github.com/user-attachments/assets/67ad4c30-687b-4efe-bd2e-8611b0235df1)
+
 ---
-
-
 
 ## Paper Highlights
 
