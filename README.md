@@ -1,6 +1,6 @@
 # Deep Learning for Invasive Ductal Carcinoma Detection 🧠🔬
 
-This repository contains the complete codebase for the research paper:
+This repository contains the complete codebase for my research paper:
 
 📄 **“Deep Learning Model for Invasive Ductal Carcinoma Detection in Histopathology Images”**  
 👨‍💻 **Author:** Dylan Jayabahu  
@@ -25,6 +25,6 @@ This repository contains the complete codebase for the research paper:
   - Oversampling from biologically homogenous regions
   - High-resolution sliding window heatmaps
 
-🔗 **Full Paper PDF Preprint:** [https://doi.org/10.36227/techrxiv.172979260.09225931/v2]
+🔗 **Full Paper PDF (Preprint):** [https://doi.org/10.36227/techrxiv.172979260.09225931/v2]
 
 🔗 **Conference Program:** [https://ccece2025.ieee.ca/technical-program/]
