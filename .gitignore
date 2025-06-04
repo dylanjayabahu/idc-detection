@@ -1,0 +1,36 @@
+# Python-specific
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints
+
+# IDEs/editors
+.vscode/
+.idea/
+*.swp
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+env/
+venv/
+
+# TensorFlow logs and checkpoints
+tensorboard_logs/
+saved_models/
+*.keras
+*.h5
+
+# Large or generated data
+data/
+augmentations/
+confusion_matrices/
+*.npy
+*.npz
+*.png
+*.jpg
+
+# Backup or temp files
+*.bak
+*.tmp

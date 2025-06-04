@@ -3,14 +3,10 @@ import cv2
 import os
 import numpy as np
 
-DATA_IMAGE_DIR = '/Users/ishariwaduwara-jayabahu/Desktop/Code/Python_Code/Breast_Cancer_AI/data/IDC_regular_ps50_idx5' ## do not include trailing slash here
+from data_config import *
+from parameters import *
 
-STITCHED_SLIDES_DIR = '/Users/ishariwaduwara-jayabahu/Desktop/Code/Python_Code/Breast_Cancer_AI/data/stitched_slides' ## do not include trailing slash here
-PATCHED_HEATMAP_STITCHED_SLIDES_DIR = '/Users/ishariwaduwara-jayabahu/Desktop/Code/Python_Code/Breast_Cancer_AI/data/patched_heatmap_slides'
-SLIDING_HEATMAP_STITCHED_SLIDES_DIR = '/Users/ishariwaduwara-jayabahu/Desktop/Code/Python_Code/Breast_Cancer_AI/data/sliding_heatmap_slides'
-
-
-def save_slide_image(dir, np_image, patient_id, name):
+def save_slide_image(dir, np_image, name):
     im = Image.fromarray(np_image)
     output_path = os.path.join(dir, name)
     im.save(output_path)
@@ -18,13 +14,6 @@ def save_slide_image(dir, np_image, patient_id, name):
 def stitch_slide_patches(patient_id):
     """
     Stiches the entire histology slide for a given patient ID by combining all image patches.
-    
-    Parameters:
-        patient_id (str): The ID of the patient (corresponds to a subfolder in the data_dir).
-        data_dir (str): Path to the directory containing patient folders with image patches.
-        
-    Returns:
-        numpy array of the full slide
     """
     patient_folder = os.path.join(DATA_IMAGE_DIR, patient_id)
 
@@ -50,10 +39,10 @@ def stitch_slide_patches(patient_id):
                 img = Image.open(os.path.join(class_folder, filename))
                 img = np.array(img)
                 
-                # Pad the image if it's smaller than 50x50
-                if img.shape != (50, 50, 3):
+                # Pad the image if it's smaller than PATCH_SIZExPATCH_SIZE (50x50)
+                if img.shape != (PATCH_SIZE, PATCH_SIZE, 3):
                     img = np.pad(img, 
-                                 ((0, 50 - img.shape[0]), (0, 50 - img.shape[1]), (0, 0)), 
+                                 ((0, PATCH_SIZE - img.shape[0]), (0, PATCH_SIZE - img.shape[1]), (0, 0)), 
                                  mode='constant', constant_values=0)
                 
                 # Store the image patch and its coordinates
@@ -62,30 +51,22 @@ def stitch_slide_patches(patient_id):
                 y_coords.append(y)
     
     # Calculate the size of the full slide
-    max_x = max(x_coords) + 50  # Add 50 to get the rightmost boundary
-    max_y = max(y_coords) + 50  # Add 50 to get the bottom boundary
+    max_x = max(x_coords) + PATCH_SIZE  # Add 50 to get the rightmost boundary
+    max_y = max(y_coords) + PATCH_SIZE  # Add 50 to get the bottom boundary
     
     # Initialize an empty canvas for the full slide
     full_slide = np.ones((max_y, max_x, 3), dtype=np.uint8) * 255
 
     # Place each patch on the canvas
     for patch, x, y in zip(patches, x_coords, y_coords):
-        full_slide[y:y+50, x:x+50, :] = patch
+        full_slide[y:y+PATCH_SIZE, x:x+PATCH_SIZE, :] = patch
 
     return full_slide
 
-def stitch_and_apply_patched_heatmap(patient_id, model, 
-                             heatmap_weighting = 0.4, blurring_kernel_size = 41, blurring_sigma = 100):
+def stitch_and_apply_patched_heatmap(patient_id, model, heatmap_weighting = HEATMAP_WEIGHTING, blurring_kernel_size = 41, blurring_sigma = 100):
     """
     Stitches slide and applies a heatmap to the stitched slide for a given patient using the model's predictions.
-    
-    Parameters:
-        patient_id (int): The ID of the patient (corresponds to a subfolder in the data_dir).
-        model (tf.keras.Model): The trained TensorFlow model for IDC prediction.
-        data_dir (str): Path to the directory containing patient folders with image patches.
-    
-    Returns:
-        tuple: (full_slide, heatmap, overlayed_image), all as numpy arrays.
+    Apples model prediction on each patch in the image
     """
     patient_folder = os.path.join(DATA_IMAGE_DIR, str(patient_id))
 
@@ -112,9 +93,9 @@ def stitch_and_apply_patched_heatmap(patient_id, model,
                 img = np.array(img)
                 
                 # Pad the image if it's smaller than 50x50
-                if img.shape != (50, 50, 3):
+                if img.shape != (PATCH_SIZE, PATCH_SIZE, 3):
                     img = np.pad(img, 
-                                 ((0, 50 - img.shape[0]), (0, 50 - img.shape[1]), (0, 0)), 
+                                 ((0, PATCH_SIZE - img.shape[0]), (0, PATCH_SIZE - img.shape[1]), (0, 0)), 
                                  mode='constant', constant_values=0)
                 
                 # Preprocess for the model and get prediction
@@ -128,8 +109,8 @@ def stitch_and_apply_patched_heatmap(patient_id, model,
                 predictions.append(prediction[0][1])  # Confidence for IDC positive (class 1)
     
     # Calculate the size of the full slide
-    max_x = max(x_coords) + 50  # Add 50 to get the rightmost boundary
-    max_y = max(y_coords) + 50  # Add 50 to get the bottom boundary
+    max_x = max(x_coords) + PATCH_SIZE  # Add 50 to get the rightmost boundary
+    max_y = max(y_coords) + PATCH_SIZE  # Add 50 to get the bottom boundary
     
     # Initialize an empty canvas for the full slide
     full_slide = np.ones((max_y, max_x, 3), dtype=np.uint8) * 255
@@ -137,16 +118,24 @@ def stitch_and_apply_patched_heatmap(patient_id, model,
 
     # Place each patch on the canvas and add prediction values to the heatmap
     for patch, x, y, pred in zip(patches, x_coords, y_coords, predictions):
-        full_slide[y:y+50, x:x+50, :] = patch
-        heatmap_overlay[y:y+50, x:x+50] = pred
+        full_slide[y:y+PATCH_SIZE, x:x+PATCH_SIZE, :] = patch
+        heatmap_overlay[y:y+PATCH_SIZE, x:x+PATCH_SIZE] = pred
 
     # Normalize the heatmap overlay to range [0, 1]
-    heatmap_overlay = (heatmap_overlay - np.min(heatmap_overlay)) / (np.max(heatmap_overlay) - np.min(heatmap_overlay))
+    min_val = np.min(heatmap_overlay)
+    max_val = np.max(heatmap_overlay)
+    range_val = max_val - min_val
+    if range_val == 0:
+        heatmap_overlay = np.zeros_like(heatmap_overlay)
+    else:
+        heatmap_overlay = (heatmap_overlay - min_val) / range_val
+
 
     # Apply a colormap to the heatmap
     heatmap = cv2.applyColorMap(np.uint8(255 * heatmap_overlay), cv2.COLORMAP_JET)
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)  # Convert to RGB for proper overlay
-    assert blurring_kernel_size%2 == 1
+    if blurring_kernel_size%2 == 0:
+        blurring_kernel_size += 1
     smooth_heatmap = cv2.GaussianBlur(heatmap, (blurring_kernel_size, blurring_kernel_size), blurring_sigma)
 
     # Overlay the heatmap on the original slide
@@ -155,19 +144,11 @@ def stitch_and_apply_patched_heatmap(patient_id, model,
     
     return full_slide, heatmap, smooth_heatmap, overlayed_image, overlayed_image_smooth
 
-def overlay_important_heatmap(wsi_image, heatmap, alpha=0.5):
+def overlay_threshold_heatmap(wsi_image, heatmap, alpha=OVERLAY_THRESHOLD):
     """
     Overlay the heatmap on top of the whole slide image.
     If the heatmap prediction at a pixel is below the alpha threshold, show the WSI image.
     If the heatmap prediction is above the alpha threshold, show the heatmap with no transparency.
-    
-    Parameters:
-    - wsi_image: The whole slide image as a numpy array.
-    - heatmap: The heatmap as a numpy array with values between 0 and 1.
-    - alpha: The threshold value between 0 and 1 to determine if heatmap should be shown.
-    
-    Returns:
-    - overlayed_image: The resulting numpy array with the overlay effect applied.
     """
     # Ensure heatmap is in the range 0 to 1
     heatmap_normalized = np.clip(heatmap, 0, 1)
@@ -186,9 +167,14 @@ def overlay_important_heatmap(wsi_image, heatmap, alpha=0.5):
     
     return overlayed_image
 
-def stitch_and_apply_sliding_heatmap(patient_id, model, batch_size=256, step_size = 5):
+def stitch_and_apply_sliding_heatmap(patient_id, model, batch_size=SLIDING_WINDOW_BATCH_SIZE, step_size = SLIDING_WINDOW_STEP_SIZE):
+    """
+    Stitches slide and applies a heatmap to the stitched slide for a given patient using the model's predictions.
+    Apples model prediction with a sliding window using he specified step size
+    """
+
     wsi_image = stitch_slide_patches(str(patient_id))
-    window_size = 50
+    window_size = PATCH_SIZE
 
     print(f"Sliding window predictions with steps of {step_size} on image of dims ({wsi_image.shape[0]},{wsi_image.shape[1]}), patient_id = {patient_id}")
     
@@ -207,8 +193,9 @@ def stitch_and_apply_sliding_heatmap(patient_id, model, batch_size=256, step_siz
     # Sliding window loop
     for y in range(0, wsi_image.shape[0] - window_size + 1, step_size):
         for x in range(0, wsi_image.shape[1] - window_size + 1, step_size):
-            print("   "*50, end='\r')
-            print(f"Collecting patch at coordinates ({x}, {y})", end='\r')
+            print(f"Collecting patch at coordinates ({x}, {y})", end='', flush=True)
+
+            
             
             # Extract the current window (patch)
             patch = wsi_image[y:y+window_size, x:x+window_size, :]
@@ -259,10 +246,9 @@ def stitch_and_apply_sliding_heatmap(patient_id, model, batch_size=256, step_siz
     # Blend the heatmap with the original WSI for overlay
     sliding_heatmap_overlay = cv2.addWeighted(wsi_image, 0.6, sliding_heatmap_color, 0.4, 0)
 
-    important_sliding_heatmap_overlay = overlay_important_heatmap(wsi_image, sliding_heatmap, alpha=0.3)
+    important_sliding_heatmap_overlay = overlay_threshold_heatmap(wsi_image, sliding_heatmap, alpha=0.3)
 
     return sliding_heatmap_color, sliding_heatmap_overlay, important_sliding_heatmap_overlay
-
 
 def save_full_patient_slides(ids = range(8863, 16896+1)):
     print("Stitching and Saving Slides...")
@@ -295,19 +281,18 @@ def save_patched_heatmaps(model, ids = range(8863, 16896+1)):
     print()
     return
 
-def save_sliding_heatmaps(model, ids = range(8863, 16896+1)):
+def save_sliding_heatmaps(model, ids = range(8863, 16896+1), step_size = SLIDING_WINDOW_STEP_SIZE):
     print("Stitching, Generating Sliding Heatmaps, and Saving for Slides...")
     dir = SLIDING_HEATMAP_STITCHED_SLIDES_DIR
     for patient_id in ids:
         try:
-            heatmap, heatmap_overlay, important_heatmap_overlay = stitch_and_apply_sliding_heatmap(patient_id, model)
+            heatmap, heatmap_overlay, important_heatmap_overlay = stitch_and_apply_sliding_heatmap(patient_id, model, step_size = step_size)
 
-            # save_slide_image(dir, heatmap_overlay, patient_id, f'{patient_id}_Sliding_Heatmap_Overlay.png')
-            # save_slide_image(dir, heatmap, patient_id, f'{patient_id}_Sliding_Heatmap.png')
+            save_slide_image(dir, heatmap_overlay, patient_id, f'{patient_id}_Sliding_Heatmap_Overlay.png')
+            save_slide_image(dir, heatmap, patient_id, f'{patient_id}_Sliding_Heatmap.png')
             save_slide_image(dir, important_heatmap_overlay, patient_id, f'{patient_id}_Sliding_Important_Heatmap_Overlay.png')
 
             print(f"Stitched and Heatmapped Slide of Patient ID {patient_id}", end='\r')
         except FileNotFoundError:
             pass
     print()
-
