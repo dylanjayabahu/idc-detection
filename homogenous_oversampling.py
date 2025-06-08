@@ -1,7 +1,7 @@
-import random
-import os
 import numpy as np
+import os
 from PIL import Image
+import random
 
 from data_config import DATA_IMAGE_DIR
 from parameters import *

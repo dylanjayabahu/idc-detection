@@ -1,7 +1,7 @@
-from PIL import Image
 import cv2
-import os
 import numpy as np
+import os
+from PIL import Image
 
 from data_config import *
 from parameters import *

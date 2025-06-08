@@ -1,12 +1,12 @@
-import tensorflow as tf
-import os
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, balanced_accuracy_score
+import tensorflow as tf
 
-from model_versions import *
 from data_config import TENSORBOARD_DIR, SAVED_MODELS_DIR, CONFUSION_MATRIX_DIR
+from model_versions import *
 from parameters import *
     
 def make_model(show_summary=True, model_number = MODEL_NUMBER):

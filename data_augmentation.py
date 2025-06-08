@@ -1,7 +1,8 @@
-import tensorflow as tf
 import matplotlib.pyplot as plt
-import os
 import numpy as np
+import os
+import tensorflow as tf
+
 
 from data_config import DATA_AUGMENTATIONS_DIR
 
