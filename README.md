@@ -1,11 +1,10 @@
-# Deep Learning for Invasive Ductal Carcinoma Detection 🧠🔬
+# Deep Learning for Invasive Ductal Carcinoma Detection
 
 This repository contains the complete codebase for my research paper:
 
-📄 **“Deep Learning Model for Invasive Ductal Carcinoma Detection in Histopathology Images”**  
-👨‍💻 **Author:** Dylan Jayabahu  
-🎓 **Affiliation:** Chirp Inc., Waterloo, Canada  
-🎤 **Presented at:** *2025 IEEE Canadian Conference on Electrical and Computer Engineering (CCECE)*  
+**“Deep Learning Model for Invasive Ductal Carcinoma Detection in Histopathology Images”**  
+**Author:** Dylan Jayabahu (Waterloo, Canada)
+**Presented at:** *2025 IEEE Canadian Conference on Electrical and Computer Engineering (CCECE)*  
 
 > This research introduces a deep learning pipeline for the detection of **Invasive Ductal Carcinoma (IDC)** in breast histopathology whole-slide images (WSIs), addressing both accuracy and interpretability for clinical decision-making.
 
