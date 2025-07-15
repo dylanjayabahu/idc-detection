@@ -17,9 +17,9 @@ def unison_shuffle_dataset(a, b):
 
 def describe_data(a, b):
     print('Total number of images (x_data):', len(a))
-    print('Total number of images (y_data):', len(a))
-    print('Number of IDC(-) Images:', np.sum(b==0))
-    print('Number of IDC(+) Images:', np.sum(b==1))
+    print('Total number of labels (y_data):', len(a))
+    print('Number of IDC(-) images:', np.sum(b==0))
+    print('Number of IDC(+) images:', np.sum(b==1))
     print('Percentage of positive images:', str(round(100*np.mean(b), 2)) + '%') 
     print('Image shape (Width, Height, Channels):', a[0].shape)
     print()
