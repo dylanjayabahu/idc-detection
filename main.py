@@ -27,7 +27,8 @@ def main():
     ##train model
     if SHOULD_TRAIN:
         model, model_filename = train_model(model, train_ds, validation_ds, 
-                                            epochs=NUM_EPOCHS, early_stopper_patience=EARLY_STOPPER_PATIENCE)
+                                            epochs=NUM_EPOCHS, early_stopper_patience=EARLY_STOPPER_PATIENCE,
+                                            model_filename = "f1_model_test")
         save_model(model, name=model_filename + ".keras")
 
 

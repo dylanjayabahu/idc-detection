@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from parameters import PATCH_SIZE
+from metrics import *
 
 def make_model1(show_summary=True):
     ##make model
@@ -297,7 +298,7 @@ def make_model8(show_summary=True):
 
     model.compile(optimizer=optimizer, 
                   loss='categorical_crossentropy', 
-                  metrics=['accuracy', 'Precision', 'Recall'])
+                  metrics=['accuracy', 'Precision', 'Recall', F1Score()])
 
     if show_summary:
         model.summary()

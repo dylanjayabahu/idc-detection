@@ -194,8 +194,6 @@ def stitch_and_apply_sliding_heatmap(patient_id, model, batch_size=SLIDING_WINDO
     for y in range(0, wsi_image.shape[0] - window_size + 1, step_size):
         for x in range(0, wsi_image.shape[1] - window_size + 1, step_size):
             print(f"Collecting patch at coordinates ({x}, {y})", end='', flush=True)
-
-            
             
             # Extract the current window (patch)
             patch = wsi_image[y:y+window_size, x:x+window_size, :]
@@ -256,7 +254,7 @@ def save_full_patient_slides(ids = range(8863, 16896+1)):
     for patient_id in ids:
         try:
             full_slide = stitch_slide_patches(str(patient_id))
-            save_slide_image(dir, full_slide, patient_id, f'{patient_id}_Full_Slide.png')
+            save_slide_image(dir, full_slide, f'{patient_id}_Full_Slide.png')
         except:
             pass
     print()
@@ -269,11 +267,11 @@ def save_patched_heatmaps(model, ids = range(8863, 16896+1)):
         try:
             full_slide, raw_heatmap, smooth_heatmap, raw_overlayed_image, overlayed_image_smooth = stitch_and_apply_patched_heatmap(patient_id, model)
 
-            save_slide_image(dir, overlayed_image_smooth, patient_id, f'{patient_id}_Smooth_Patched_Heatmap_Overlay.png')
-            # save_slide_image(dir, smooth_heatmap, patient_id, f'{patient_id}_Smooth_Patched_Heatmap.png')
+            save_slide_image(dir, overlayed_image_smooth, f'{patient_id}_Smooth_Patched_Heatmap_Overlay.png')
+            # save_slide_image(dir, smooth_heatmap, f'{patient_id}_Smooth_Patched_Heatmap.png')
 
-            save_slide_image(dir, raw_overlayed_image, patient_id, f'{patient_id}_Blocked_Patched_Heatmap_Overlay.png')
-            save_slide_image(dir, raw_heatmap, patient_id, f'{patient_id}_Blocked_Patched_Heatmap.png')
+            save_slide_image(dir, raw_overlayed_image, f'{patient_id}_Blocked_Patched_Heatmap_Overlay.png')
+            save_slide_image(dir, raw_heatmap, f'{patient_id}_Blocked_Patched_Heatmap.png')
 
             print(f"Stitched and Heatmapped Slide of Patient ID {patient_id}", end='\r')
         except FileNotFoundError:
@@ -288,11 +286,104 @@ def save_sliding_heatmaps(model, ids = range(8863, 16896+1), step_size = SLIDING
         try:
             heatmap, heatmap_overlay, important_heatmap_overlay = stitch_and_apply_sliding_heatmap(patient_id, model, step_size = step_size)
 
-            save_slide_image(dir, heatmap_overlay, patient_id, f'{patient_id}_Sliding_Heatmap_Overlay.png')
-            save_slide_image(dir, heatmap, patient_id, f'{patient_id}_Sliding_Heatmap.png')
-            save_slide_image(dir, important_heatmap_overlay, patient_id, f'{patient_id}_Sliding_Important_Heatmap_Overlay.png')
+            save_slide_image(dir, heatmap_overlay, f'{patient_id}_Sliding_Heatmap_Overlay.png')
+            save_slide_image(dir, heatmap, f'{patient_id}_Sliding_Heatmap.png')
+            save_slide_image(dir, important_heatmap_overlay, f'{patient_id}_Sliding_Important_Heatmap_Overlay.png')
 
             print(f"Stitched and Heatmapped Slide of Patient ID {patient_id}", end='\r')
         except FileNotFoundError:
             pass
     print()
+
+
+def stitch_and_apply_ground_truth_heatmap(patient_id, heatmap_weighting = HEATMAP_WEIGHTING):
+    """
+    Stitches slide and applies a heatmap to the stitched slide for a given patient using the model's predictions.
+    Apples model prediction on each patch in the image
+    """
+    patient_folder = os.path.join(DATA_IMAGE_DIR, str(patient_id))
+
+    # Initialize lists to store patches and their coordinates
+    patches = []
+    x_coords = []
+    y_coords = []
+    predictions = []
+    
+    # Iterate through both IDC negative (0) and IDC positive (1) folders
+    for class_label in ['0', '1']:
+        class_folder = os.path.join(patient_folder, class_label)
+        for filename in os.listdir(class_folder):
+            if filename.endswith(".png"):
+                print("   "*50, end='\r')
+                print("Patching Filename " + filename + " ...", end='\r')
+                # Parse the filename to extract coordinates
+                parts = filename.split('_')
+                x = int(parts[2][1:])  # Extract X coordinate (e.g., x1351 -> 1351)
+                y = int(parts[3][1:])  # Extract Y coordinate (e.g., y1101 -> 1101)
+                
+                # Load the image patch and preprocess for the model
+                img = Image.open(os.path.join(class_folder, filename))
+                img = np.array(img)
+                
+                # Pad the image if it's smaller than 50x50
+                if img.shape != (PATCH_SIZE, PATCH_SIZE, 3):
+                    img = np.pad(img, 
+                                 ((0, PATCH_SIZE - img.shape[0]), (0, PATCH_SIZE - img.shape[1]), (0, 0)), 
+                                 mode='constant', constant_values=0)
+                
+                # Store the prediction, image patch, and coordinates
+                patches.append(img)
+                x_coords.append(x)
+                y_coords.append(y)
+
+                # predictions.append(prediction[0][1])  # Confidence for IDC positive (class 1)
+                predictions.append(int(class_label))
+    
+    # Calculate the size of the full slide
+    max_x = max(x_coords) + PATCH_SIZE  # Add 50 to get the rightmost boundary
+    max_y = max(y_coords) + PATCH_SIZE  # Add 50 to get the bottom boundary
+    
+    # Initialize an empty canvas for the full slide
+    full_slide = np.ones((max_y, max_x, 3), dtype=np.uint8) * 255
+    heatmap_overlay = np.zeros((max_y, max_x), dtype=np.float32)
+
+    # Place each patch on the canvas and add prediction values to the heatmap
+    for patch, x, y, pred in zip(patches, x_coords, y_coords, predictions):
+        full_slide[y:y+PATCH_SIZE, x:x+PATCH_SIZE, :] = patch
+        heatmap_overlay[y:y+PATCH_SIZE, x:x+PATCH_SIZE] = pred
+
+    # Normalize the heatmap overlay to range [0, 1]
+    min_val = np.min(heatmap_overlay)
+    max_val = np.max(heatmap_overlay)
+    range_val = max_val - min_val
+    if range_val == 0:
+        heatmap_overlay = np.zeros_like(heatmap_overlay)
+    else:
+        heatmap_overlay = (heatmap_overlay - min_val) / range_val
+
+
+    # Apply a colormap to the heatmap
+    heatmap = cv2.applyColorMap(np.uint8(255 * heatmap_overlay), cv2.COLORMAP_JET)
+    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)  # Convert to RGB for proper overlay
+
+    # Overlay the heatmap on the original slide
+    overlayed_image = cv2.addWeighted(full_slide, 1-heatmap_weighting, heatmap, heatmap_weighting, 0)
+    
+    return full_slide, heatmap, overlayed_image
+
+
+def save_ground_truth_heatmaps(ids = [8863]):
+    print("Stitching, Generating Patched Heatmaps, and Saving for Slides...")
+    dir = PATCHED_HEATMAP_STITCHED_SLIDES_DIR
+    for patient_id in ids:
+        try:
+            full_slide, heatmap, overlayed_image = stitch_and_apply_ground_truth_heatmap(patient_id)
+
+            save_slide_image(dir, overlayed_image, f'{patient_id}_Ground_Truth_Overlay.png')
+            save_slide_image(dir, heatmap, f'{patient_id}_Ground_Truth_Heatmap.png')
+
+            print(f"Stitched and Heatmapped Slide of Patient ID {patient_id}", end='\r')
+        except FileNotFoundError:
+            pass
+    print()
+    return

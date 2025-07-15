@@ -24,11 +24,12 @@ def train_model(model, train_ds, validation_ds, epochs=1, early_stopper_patience
 
     if early_stopper_patience > 0:
         ##early stopper stops training if validation loss stops decreasing
-        early_stopper = tf.keras.callbacks.EarlyStopping(monitor='val_loss', 
+        early_stopper = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', 
                                                         min_delta=0, 
                                                         patience=early_stopper_patience, 
                                                         verbose=1,
-                                                        restore_best_weights=True)
+                                                        mode='max',
+                                                        restore_best_weights=True,)
         
         train_callbacks.append(early_stopper)
     
