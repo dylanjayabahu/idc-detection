@@ -8,7 +8,6 @@ import tensorflow as tf
 from data_augmentation import *
 from data_config import DATA_IMAGE_DIR, DATA_NP_DIR
 from parameters import *
-from parameters import *
 
 def unison_shuffle_dataset(a, b):
     assert len(a) == len(b)
@@ -152,16 +151,6 @@ def load_data(batch_size=BATCH_SIZE, show_data_stats=True, augment_data=False, n
     y_train = np.load(os.path.join(DATA_NP_DIR, 'Y_TRAIN.npy'))  # Oversampled training labels
 
     print("Finished Loading Files")     
-
-    ######################################### DESCRIBE DATA #########################################
-    # print("TOTAL")
-    # print(f"Total Patches: {len(y_test) + len(y_validation) + len(y_train)}")
-    # print(f"Total Positive Patches: {sum(y_test) + sum(y_validation) + sum(y_train)}")
-    # print()
-
-    # print(f"TRAIN")
-    # print(f"Total Patches: {len(y_train)}")
-    # print(f"Total Positiev Patches: {sum(y_train)}")
 
     ########################################## NORMALIZE DATA ##########################################
     print("Normalizing Data...")
