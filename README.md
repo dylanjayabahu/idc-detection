@@ -25,4 +25,5 @@ This repository contains the complete codebase for my research paper:
   - High-resolution sliding window heatmaps
 
 🔗 **Full Paper (IEEE Xplore):** [https://ieeexplore.ieee.org/document/11364431]
+
 🔗 **Conference Program:** [https://ccece2025.ieee.ca/technical-program/]
