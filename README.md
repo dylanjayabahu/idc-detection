@@ -24,6 +24,5 @@ This repository contains the complete codebase for my research paper:
   - Oversampling from biologically homogenous regions
   - High-resolution sliding window heatmaps
 
-🔗 **Full Paper PDF (Preprint):** [https://doi.org/10.36227/techrxiv.172979260.09225931/v2]
-
+🔗 **Full Paper (IEEE Xplore):** [https://ieeexplore.ieee.org/document/11364431]
 🔗 **Conference Program:** [https://ccece2025.ieee.ca/technical-program/]
